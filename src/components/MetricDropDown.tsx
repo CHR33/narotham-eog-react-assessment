@@ -1,21 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Autocomplete, AutocompleteRenderInputParams } from '@material-ui/lab';
 import { TextField } from '@material-ui/core';
+import { createClient, Provider, useQuery } from 'urql';
 
 interface MetricDropDownProps {
 	onMetricSelection: (val: string[]) => void;
 }
 
-const metrics = [
-	'waterTemp',
-	'flareTemp',
-	'casingPressure',
-	'oilTemp',
-	'turbinePressure',
-	'injValveOpen'
-];
+const client = createClient({
+  url: "https://react.eogresources.com/graphql"
+});
 
-export const MetricDropDown: React.FC<MetricDropDownProps> = (props) => {
+const query = `
+	query getMetrics {
+		getMetrics
+	}
+`;
+
+export default (props: MetricDropDownProps) => {
+	return (
+		<Provider value={client}>
+			<MetricDropDown {...props} />
+		</Provider>
+	)
+}
+
+export const MetricDropDown = (props: MetricDropDownProps) => {
+	const [metrics, setMetrics] = useState<string[]>([]);
+
+	const [result] = useQuery({
+    query
+	});
+
+	const { data } = result;
+
+	useEffect(() => {
+    if (!data) return;
+
+    setMetrics(data.getMetrics);
+  }, [data]);
+
 	return (
 		<Autocomplete
 			filterSelectedOptions

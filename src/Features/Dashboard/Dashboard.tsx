@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { makeStyles } from '@material-ui/core';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Provider, createClient, useQuery } from 'urql';
+import { makeStyles } from '@material-ui/core';
 
-import { MetricDropDown } from '../../components/MetricDropDown';
-import { IState } from '../../store';
-import { actions } from './reducer';
+import MetricDropDown from '../../components/MetricDropDown';
+import MeasurementChart from '../../components/MeasurementChart';
+import LastKnownMeasurement from '../../components/LastKnownMeasurement';
+import { Measurement, MeasurementItem } from '../../models';
 
 const useStyles = makeStyles({
 	container: {
@@ -17,12 +17,17 @@ const useStyles = makeStyles({
 	},
 	infoContainer: {
 		display: 'flex',
-		height: '70px',
-		justifyContent: 'flex-end',
+		minHeight: '90px',
+		justifyContent: 'space-between',
 		padding: '16px'
 	},
 	dropDownContainer: {
-		width: '350px',
+		flex: '1',
+	},
+	heartBeatDataContainer: {
+		display: 'flex',
+		flex: '1',
+		flexWrap: 'wrap',
 	}
 });
 
@@ -31,23 +36,18 @@ const client = createClient({
 });
 
 const query = `
-	query($selectedMetric: String!) {
-		getMeasurements(input: {
-			metricName: $selectedMetric,
-			before: ${new Date().getTime()},
-			after: ${new Date().getTime() - 2700000}
-		}) {
+	query($measurementQuery: [MeasurementQuery]) {
+		getMultipleMeasurements(input: $measurementQuery) {
 			metric,
-			at,
-			value,
-			unit
+			measurements {
+				at,
+				metric,
+				value,
+				unit
+			}
 		}
 	}
 `;
-
-const getData = (state: IState) => {
-	console.log(state.metric);
-};
 
 export default () => {
 	return (
@@ -58,42 +58,70 @@ export default () => {
 };
 
 export const Dashboard = () => {
+	const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
+	const [chartData, setChartData] = useState<Measurement[]>([]);
+	const measurementQuery = useMemo(() => {
+		return selectedMetrics.map((metricName) => ({
+			metricName,
+			before: new Date().getTime(),
+			after: new Date().getTime() - 1800000
+		}));
+	}, [selectedMetrics]);
 	const styles = useStyles();
-	const [selectedMetric, setSelectedMetric] = useState('');
 	const [result] = useQuery({
     query,
     variables: {
-      selectedMetric,
+      measurementQuery,
 		},
-		pause: !selectedMetric
+		pause: measurementQuery.length === 0
 	});
-	const dispatch = useDispatch();
 
-	const { fetching, data, error } = result;
+	const { data, error } = result;
 
-	const handleMetricSelection = useCallback((metrics: string[]) => {
-		setSelectedMetric(metrics[0]);
-		console.log('metrics:', metrics.join(','));
-	}, []);
+	const onMetricSelection = useCallback((metrics: string[]) => {
+		setSelectedMetrics(metrics);
+	}, [])
 
   useEffect(() => {
 		if (!data) return;
+
+		const { getMultipleMeasurements } = data;
+		const newChartData: Measurement[][] = [];
+
+		getMultipleMeasurements.forEach((item: MeasurementItem) => {
+      return newChartData.push(item.measurements);
+		});
 		
-		console.log('data', data);
+		const mappedData = newChartData.flat().map(item => {
+			item[item.metric] = item.value;
+			return item;
+		});
 
-		const { getMeasurements } = data;
-
-    dispatch(actions.metricDataRecevied(getMeasurements));
-  }, [dispatch, data, error]);
-
-  if (fetching) return <div>Loading</div>;
+		setChartData(mappedData);
+  }, [data, error]);
 
 	return (
 		<section className={styles.container}>
 			<div className={styles.infoContainer}>
-				<div className={styles.dropDownContainer}>
-					<MetricDropDown onMetricSelection={handleMetricSelection} />
+				<div className={styles.heartBeatDataContainer}>
+					{selectedMetrics.map(metric => (
+						<LastKnownMeasurement
+							key={metric}
+							metricName={metric}
+						/>
+					))}
 				</div>
+				<div className={styles.dropDownContainer}>
+					<MetricDropDown onMetricSelection={onMetricSelection} />
+				</div>
+			</div>
+			<div>
+				{chartData.length > 0 && (
+					<MeasurementChart
+						data={chartData}
+						selectedMetrics={selectedMetrics}
+					/>
+				)}
 			</div>
 		</section>
 	);
