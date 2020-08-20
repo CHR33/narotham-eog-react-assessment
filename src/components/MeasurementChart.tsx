@@ -18,6 +18,10 @@ const MeasurementChart = (props: MeaurementChartProps) => {
     return moment.unix(date).format("hh:mm");
   };
 
+  const hasTempData = props.selectedMetrics.some((item) => item === 'waterTemp' || item === 'oilTemp' || item === 'flareTemp');
+  const hasPSIData = props.selectedMetrics.some((item) => item === 'tubingPressure' || item === 'casingPressure');
+  const hasInjData = props.selectedMetrics.some((item) => item === 'injValveOpen');
+
   return (
     <LineChart
       data={props.data}
@@ -28,32 +32,45 @@ const MeasurementChart = (props: MeaurementChartProps) => {
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis
         dataKey="at"
+        tickCount={6}
         tickFormatter={xAxisTickFormatter}
       />
-      <YAxis yAxisId="PSI">
-        <Label
-          offset={20}
-          position="bottom"
-          style={{ textAnchor: "middle" }}
-          value="PSI"
-        />
-      </YAxis>
-      <YAxis yAxisId="F" orientation="left">
-        <Label
-          offset={20}
-          position="bottom"
-          style={{ textAnchor: "middle" }}
-          value="F"
-        />
-      </YAxis>
-      <YAxis yAxisId="%" orientation="left">
-        <Label
-          offset={20}
-          position="bottom"
-          style={{ textAnchor: "middle" }}
-          value="%"
-        />
-      </YAxis>
+      {hasTempData && (
+        <YAxis
+          orientation="left"
+          yAxisId="F"
+        >
+          <Label
+            offset={20}
+            position="bottom"
+            style={{ textAnchor: "middle" }}
+            value="F"
+          />
+        </YAxis>
+      )}
+      {hasPSIData && (
+        <YAxis yAxisId="PSI">
+          <Label
+            offset={20}
+            position="bottom"
+            style={{ textAnchor: "middle" }}
+            value="PSI"
+          />
+        </YAxis>
+      )}
+      {hasInjData && (
+        <YAxis
+          orientation="left"
+          yAxisId="%"
+        >
+          <Label
+            offset={20}
+            position="bottom"
+            style={{ textAnchor: "middle" }}
+            value="%"
+          />
+        </YAxis>
+      )}
       <Legend />
       <Tooltip />
       {props.selectedMetrics.length > 0

@@ -58,13 +58,12 @@ const LastKnownMeasurement = (props: LastMeasurementProps) => {
     if (!data) return;
 
     setMeasurement(data.getLastKnownMeasurement as Measurement);
-    
-    const interval = setInterval(() => {
+
+    const intervalId = setInterval(() => {
       executeQuery({ requestPolicy: 'network-only' });
-      setMeasurement(data.getLastKnownMeasurement);
-    }, 1500);
-    
-    return () => clearInterval(interval);
+    }, 1300);
+
+    return () => clearInterval(intervalId);
   }, [data, executeQuery]);
 
   return (

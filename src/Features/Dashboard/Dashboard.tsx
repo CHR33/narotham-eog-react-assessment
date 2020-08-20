@@ -17,7 +17,6 @@ const useStyles = makeStyles({
 	},
 	infoContainer: {
 		display: 'flex',
-		minHeight: '90px',
 		justifyContent: 'space-between',
 		padding: '16px'
 	},
@@ -34,6 +33,12 @@ const useStyles = makeStyles({
 const client = createClient({
 	url: 'https://react.eogresources.com/graphql',
 });
+
+const heartBeatQuery = `
+	query heartBeat {
+		heartBeat
+	}
+`;
 
 const query = `
 	query($measurementQuery: [MeasurementQuery]) {
@@ -59,16 +64,21 @@ export default () => {
 
 export const Dashboard = () => {
 	const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
+	const [heartBeat, setHeartBeat] = useState<number>(0);
 	const [chartData, setChartData] = useState<Measurement[]>([]);
 	const measurementQuery = useMemo(() => {
 		return selectedMetrics.map((metricName) => ({
 			metricName,
-			before: new Date().getTime(),
-			after: new Date().getTime() - 1800000
+			after: heartBeat - 1800000
 		}));
-	}, [selectedMetrics]);
+	}, [selectedMetrics, heartBeat]);
 	const styles = useStyles();
-	const [result] = useQuery({
+
+	const [heartBeatResult] = useQuery({
+    query: heartBeatQuery
+  });
+
+	const [result, executeQuery] = useQuery({
     query,
     variables: {
       measurementQuery,
@@ -76,7 +86,7 @@ export const Dashboard = () => {
 		pause: measurementQuery.length === 0
 	});
 
-	const { data, error } = result;
+	const { data } = result;
 
 	const onMetricSelection = useCallback((metrics: string[]) => {
 		setSelectedMetrics(metrics);
@@ -85,6 +95,12 @@ export const Dashboard = () => {
 			setChartData([]);
 		}
 	}, [])
+
+	useEffect(() => {
+		if (heartBeatResult && heartBeatResult.data) {
+			setHeartBeat(heartBeatResult.data.heartBeat)
+		}
+	}, [heartBeatResult]);
 
   useEffect(() => {
 		if (!data) return;
@@ -95,14 +111,20 @@ export const Dashboard = () => {
 		getMultipleMeasurements.forEach((item: MeasurementItem) => {
       return newChartData.push(item.measurements);
 		});
-		
+
 		const mappedData = newChartData.flat().map(item => {
 			item[item.metric] = item.value;
 			return item;
 		});
 
 		setChartData(mappedData);
-  }, [data, error]);
+
+		const intervalId = setInterval(() => {
+			executeQuery({ requestPolicy: 'network-only' });
+		}, 1300);
+
+		return () => clearInterval(intervalId);
+	}, [data, executeQuery]);
 
 	return (
 		<section className={styles.container}>
