@@ -80,6 +80,10 @@ export const Dashboard = () => {
 
 	const onMetricSelection = useCallback((metrics: string[]) => {
 		setSelectedMetrics(metrics);
+
+		if (metrics.length === 0) {
+			setChartData([]);
+		}
 	}, [])
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Legend, Label} from 'recharts';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Legend, Label, Tooltip} from 'recharts';
 
 import { Measurement } from '../models';
 
@@ -23,6 +23,7 @@ const MeasurementChart = (props: MeaurementChartProps) => {
       data={props.data}
       height={500}
       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      width={800}
     >
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis
@@ -54,6 +55,7 @@ const MeasurementChart = (props: MeaurementChartProps) => {
         />
       </YAxis>
       <Legend />
+      <Tooltip />
       {props.selectedMetrics.length > 0
         ? props.selectedMetrics.map(metricName => {
             switch(metricName) {
@@ -97,7 +99,7 @@ const MeasurementChart = (props: MeaurementChartProps) => {
                     isAnimationActive={false}
                     key={`line-${metricName}`}
                     name={metricName}
-                    stroke="blue"
+                    stroke="#42c8f5"
                     type="monotone"
                     yAxisId="%"
                   />
