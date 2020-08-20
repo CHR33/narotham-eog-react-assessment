@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Autocomplete, AutocompleteRenderInputParams } from '@material-ui/lab';
-import { TextField } from '@material-ui/core';
+import { TextField, makeStyles } from '@material-ui/core';
 import { createClient, Provider, useQuery } from 'urql';
+
+const useStyles = makeStyles({
+	clearBtn: {
+		color: '#000'
+	},
+	metricTag: {
+		borderRadius: '4px',
+		margin: '3px',
+		maxWidth: 'calc(100% - 6px)'
+	}
+});
 
 interface MetricDropDownProps {
 	onMetricSelection: (val: string[]) => void;
@@ -27,6 +38,7 @@ export default (props: MetricDropDownProps) => {
 
 export const MetricDropDown = (props: MetricDropDownProps) => {
 	const [metrics, setMetrics] = useState<string[]>([]);
+	const styles = useStyles();
 
 	const [result] = useQuery({
     query
@@ -42,6 +54,10 @@ export const MetricDropDown = (props: MetricDropDownProps) => {
 
 	return (
 		<Autocomplete
+			classes={{
+				clearIndicator: styles.clearBtn,
+				tag: styles.metricTag
+			}}
 			filterSelectedOptions
 			renderInput={(params: AutocompleteRenderInputParams) => (
 				<TextField
