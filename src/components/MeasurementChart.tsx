@@ -87,7 +87,7 @@ const MeasurementChart = (props: MeaurementChartProps) => {
                     isAnimationActive={false}
                     name={metricName}
                     key={`line-${metricName}`}
-                    stroke="#8884d8"
+                    stroke={getColorCode(metricName)}
                     type="monotone"
                     yAxisId="F"
                   />
@@ -102,7 +102,7 @@ const MeasurementChart = (props: MeaurementChartProps) => {
                     isAnimationActive={false}
                     key={`line-${metricName}`}
                     name={metricName}
-                    stroke="#82ca9d"
+                    stroke={getColorCode(metricName)}
                     type="monotone"
                     yAxisId="PSI"
                   />
@@ -116,7 +116,7 @@ const MeasurementChart = (props: MeaurementChartProps) => {
                     isAnimationActive={false}
                     key={`line-${metricName}`}
                     name={metricName}
-                    stroke="#42c8f5"
+                    stroke={getColorCode(metricName)}
                     type="monotone"
                     yAxisId="%"
                   />
@@ -130,3 +130,20 @@ const MeasurementChart = (props: MeaurementChartProps) => {
     </LineChart>
   );
 };
+
+const getColorCode = (name: string) => {
+  switch(name) {
+    case 'oilTemp':
+      return '#311B92';
+    case 'waterTemp':
+      return '#006064';
+    case 'flareTemp':
+      return '#F57F17';
+    case 'tubingPressure':
+      return '#FFAB00';
+    case 'casingPressure':
+      return '#BF360C';
+    case 'injValveOpen':
+      return '#880E4F';
+  }
+}
